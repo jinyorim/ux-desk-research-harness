@@ -1,0 +1,140 @@
+# 규칙 SSOT. 수치·목록·임계값은 이 파일에만 둔다.
+# 의미와 출처는 docs/gates.md, 시각 값은 아래 visual (docs/outputs.md).
+# 바꾸면 반드시 `python harness/verify.py --fixtures` 실행 (docs/verification.md).
+
+jev:
+  upper: 0.85          # 이상이면 통과 (판정 사례로 조정)
+  lower: 0.5           # 미만이면 실패, 사이는 보류
+  on_error: stop       # 호출 실패는 오류(종료 코드 2). 건너뛰지 않음
+  max_input_tokens: 32000   # OpenRouter Jev 문서 (원문+질문 합계)
+  long_source: excerpt      # 초과 시 주장 수치·핵심어가 있는 문단 앞뒤만 잘라 보냄
+  excerpt_chars: 12000      # 원문을 이 글자 수까지만 보냄 (한국어 1자≈1~2토큰, 32000 안쪽 여유)
+
+claims:
+  min_chars: 10        # 이보다 짧은 줄(표 제목 칸 등)은 주장 문장으로 보지 않음
+
+report_check:         # S5 보고서 사실 검사 (run.py --target s5)
+  skip_sections: [HYPOTHESIS]   # 가설 문장은 사실 주장이 아님. 인용 블록(해석)도 건너뜀
+  internal_sections: [교차검증]   # 출처 없는 숫자를 실패 대신 '내부 기록' 경고로 (판정 건수 등)
+
+absence:              # "없다" 주장은 Jev 대신 스크립트로 (docs/gates.md)
+  verdict_if_absent: hold     # 원문에 해당 낱말이 없으면 보류 (부재는 범위 밖 사례 가능성 때문에 통과로 올리지 않음)
+  verdict_if_found: fail      # 원문에 있으면 실패
+
+modules:              # 세부 작업 표 형식 (check_modules.py, .claude/skills/market-modules)
+  positioning_min_competitors: 4   # market-modules C4
+  calc_tolerance: 0.01             # 시장 규모 계산 허용 오차 1%
+  quote_max_chars: 125             # 테마 인용 길이 (pm-skills sentiment-analysis)
+
+review:               # 교차 검사 (docs/review.md)
+  audit_pass_ratio: 0.2       # 판정 감사: 보류와 실패는 전부, 통과는 이 비율만 표본으로
+  return_findings: all        # 검사 지적은 심각도와 관계없이 전부 되돌린다
+  max_rounds: 3                # 되돌리는 횟수 상한 = retry.max. 넘으면 종료 코드 2
+
+retry:
+  max: 3               # docs/pipeline.md
+
+sources:
+  min_auto: 2          # 자동 소스 성공 수 하한 (docs/pipeline.md)
+  auto: [gemini, exa, claude]
+  optional: [chatgpt_aside]
+
+freshness:
+  max_years: 2         # 시간 민감 수치 허용 기간 (docs/brief-template.md 9번)
+  stale_label: "과거 자료이며 현재 유지 여부는 확인되지 않음"
+  sensitive_terms: [수수료, 요율, 가격, 요금, 이용료, 할인, 이용자, 회원, 거래액, 매출]   # docs/brief-template.md 9번
+
+grades:
+  allowed: [A, B, C]
+  domain_allowlist:    # 스크립트 1차 분류. 목록에 없으면 Jev(Choice)로 분류
+    A: []
+    B: []
+    C: []
+
+mix:                   # 엔진 결과 혼합 (docs/pipeline.md)
+  official_min: 0.30
+  distinct_domains_min: 5
+  single_source_max: 0.25
+  counterpoints_warn: 3   # 경고만
+
+forbidden_headings:    # 제목만 검사 (docs/brief-template.md 0-5)
+  - "전략적 시사점"
+  - "제언"
+
+uibowl:                # C5 실행 시에만
+  min_refs: 5
+  require_ui_url: true
+  require_query_date: true
+  screenshots_max: 0
+
+report:               # docx 분량
+  docx_pages_target: 10
+  docx_pages_min: 8
+  docx_pages_max: 12     # 출처 목록은 쪽수에서 제외. 벗어나면 S5 게이트 경고
+  docx_page: A4
+  docx_font_pt: {body: 10, table: 9, h1: 16, h2: 13}
+  detail_open: "<!-- detail -->"     # 이 블록은 docx에서 빼고 html에서 접어 보여줌
+  detail_close: "<!-- /detail -->"
+
+korean:               # 한국어 문장 검사 (harness/judge/check_korean.py, docs/korean-writing.md)
+  forbidden_chars: ["·", "—", "–"]   # 가운뎃점, em dash, en dash (docs/korean-writing.md)
+  rough_words: [박아, 박힌, 갈아끼, 때려박, 뒤집]       # 거친 구어 (docs/korean-writing.md)
+  s1_patterns:          # 발견 즉시 실패 (docs/korean-writing.md S1)
+    - '에\s?대(해|한|하여)'
+    - '(을|를)\s?통(해|하여|한)'
+    - '에\s?있어(서)?'
+    - '(을|를)\s?(가지고|갖고)\s?있'
+    - '되어\s?지|되어진|되어져'
+    - '시사하는\s?바'
+    - '폭발적'
+  s2_patterns:          # 한 문서에 s2_max회 초과면 실패 (docs/korean-writing.md S2)
+    - '에\s?의(해|한)'
+    - '는\s?점에서'
+    - '할\s?수\s?있을\s?것'
+    - '가능성이\s?있을\s?수'
+    - '매우'
+    - '것이다'
+    - '다는\s?뜻이다'
+    - '^(또한|따라서|즉|나아가|결론적으로)'
+  s2_max: 2
+  s2_exempt:            # 패턴별 예외 섹션. 가설 문장은 '~할 것이다' 형식을 쓴다
+    '것이다': [HYPOTHESIS]
+  vague_words: [부분적으로, 전반적으로, 상대적으로]      # 경고
+  topic_marker_max: 2   # 한 문장의 보조사 은/는 (Kiwi JX). 넘으면 경고
+  modifier_pred_max: 2  # 명사 앞 관형절 안 서술어 수 (예: 맞춰 고르고 비교하는 기능 = 3). 넘으면 경고
+  comma_after_ending_ratio: 0.10   # 연결어미 뒤 쉼표 비율. 넘으면 경고 (KatFishNet)
+  max_chars: {title: 30, answer: 70, claim: 45, headline: 70, sentence: 80, cell: 80}   # 넘으면 경고
+
+figures:
+  per_stage_min: 1
+  extra_max: 5         # 보고서 전체 기준 (R4)
+
+exit_codes:
+  pass: 0
+  fail: 1
+  error: 2
+
+visual:                # html과 docx 시각 값 (docs/outputs.md)
+  colors_allowed:
+    - "#d9266b"   # primary
+    - "#c2185b"   # primary-hover, weak-foreground
+    - "#fdeef4"   # weak-background
+    - "#191f28"   # foreground
+    - "#4e5968"   # body
+    - "#8b95a1"   # muted
+    - "#f2f4f6"   # surface
+    - "#e5e8eb"   # border
+    - "#ffffff"   # canvas
+    - "#e42939"   # danger
+  radius_allowed: [4, 6, 8, 10, 14, 16]
+  radius_diagram_max: 10
+  spacing_html: [4, 6, 8, 16, 24, 32]
+  spacing_diagram_multiple: 4
+  font_html: "Pretendard"
+  type_sizes_html: [14, 16, 22, 24, 30, 36]   # 본문 글자 크기 (px)
+  type_sizes_display: [40, 48, 64]            # 표지에만 쓰는 큰 글자 (px)
+  type_sizes_diagram: [14, 16]
+  letter_spacing_html: "-0.02em"
+  font_docx: "맑은 고딕"
+  shadows: false
+  external_resources_max: 0

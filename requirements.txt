@@ -1,0 +1,4 @@
+pyyaml
+python-dotenv
+kiwipiepy
+fonttools[woff]

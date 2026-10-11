@@ -1,0 +1,26 @@
+{
+  "id": "EX-P1",
+  "title": "원문과 일치하는 사실 문장",
+  "expect": "pass",
+  "gate": "잘못된 실패 0",
+  "as_of": "2026-10-07",
+  "note": "설명용 가상 사례. 서비스와 원문은 지어낸 것이고 URL은 예시 도메인이다.",
+  "report": "## 예시클래스\n예시클래스에 등록된 호스트는 1,200곳이다 [1].\n\n## 참고자료\n1. 예시클래스, 호스트 수수료 인하, https://example.com/news/example-class-fee",
+  "sources": {
+    "1": {
+      "url": "https://example.com/news/example-class-fee",
+      "file": "source_1.md",
+      "status": 200,
+      "published": "2026-09-01",
+      "title": "예시클래스, 호스트 수수료 인하",
+      "fetched": "2026-10-07"
+    }
+  },
+  "claims": [
+    {
+      "unit": 0,
+      "text": "예시클래스에 등록된 호스트는 1,200곳이다.",
+      "source": "1"
+    }
+  ]
+}

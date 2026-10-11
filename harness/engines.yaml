@@ -1,0 +1,43 @@
+# 엔진 모델 ID는 이 파일에만 둔다 (docs/pipeline.md).
+# 값은 2026-10-07 키 테스트 기준. 실행 전에 각 사 공식 문서로 다시 확인한다.
+# 키는 여기에 쓰지 않는다. key_env는 환경변수 "이름"만.
+
+engines:
+  gemini:
+    role: auto
+    model: deep-research-preview-04-2026      # 대안: deep-research-max-preview-04-2026
+    api: interactions
+    background: true
+    key_env: GEMINI_API_KEY
+  exa:
+    role: auto
+    research:                                 # build-with-exa references/agent.md
+      endpoint: /agent/runs
+      effort: high                            # 섹션당 $0.50 고정
+      poll_interval_ms: 4000
+    contents:                                 # 원문 저장 (docs/gates.md)
+      endpoint: /contents
+    key_env: EXA_API_KEY
+  claude:
+    role: auto
+    via: claude-code-websearch                # 구독이면 키 불필요
+    fallback_key_env: ANTHROPIC_API_KEY       # 예비. 구독 한도 초과 시에만
+  chatgpt_aside:
+    role: optional
+    via: aside-mcp                            # 같은 대화창에서 MARKET→COMPETITORS→SOLUTION GAP
+    same_thread: true
+    fallback_key_env: OPENAI_API_KEY          # 예비. API에는 deep-research 모델 없음 (2026-10-07 확인)
+
+judge:
+  jev:
+    via: openrouter                           # 대안: vercel-ai-gateway (docs/gates.md)
+    endpoint: https://openrouter.ai/api/alpha/decisions   # chat/completions 불가
+    model: typesafe/jev-1.13                  # 고정. typesafe/jev-router는 Jev가 아님(타 모델로 라우팅)
+    key_env: OPENROUTER_API_KEY
+
+review:                                       # 교차 검사 (docs/review.md)
+  auditor:                                    # 판정 감사: Jev 판정을 다른 모델로 표본 재판정
+    via: openai
+    endpoint: https://api.openai.com/v1/chat/completions
+    model: gpt-6-sol                          # 2026-10-11 호출 확인
+    key_env: OPENAI_API_KEY

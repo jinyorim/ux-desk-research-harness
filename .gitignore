@@ -1,0 +1,15 @@
+# API 키: 절대 올리지 않음 (키 이름만 있는 .env.example만 올림)
+.env
+.env.*
+!.env.example
+
+# 로컬 설정
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 실행 결과물 (매번 다시 만들 수 있음, 가져온 웹 원문 포함)
+runs/
